@@ -27,3 +27,4 @@ datasets
 transformers
 ipywidgets
 nvidia-pytriton
+async_timeout
