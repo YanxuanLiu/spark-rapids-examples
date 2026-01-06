@@ -128,10 +128,47 @@ nvidia-docker run -it my-local:my-udf-example
 
 ### Build the udf-examples jar
 
-In the Docker container, clone the code and compile.
+#### Option 1: Fast Build Using Prebuilt libcudf (Recommended)
+
+Instead of building cuDF from source (which takes a long time), you can use the prebuilt `libcudf.so` 
+from the `rapids-4-spark` jar. This is much faster!
+
+**Prerequisites:**
+- rapids-4-spark jar must be available in your local Maven repository
+
+**Steps:**
+
+1. Extract libcudf.so and cuDF headers (automatic with Maven):
+```bash
+cd spark-rapids-examples/examples/UDF-Examples/RAPIDS-accelerated-UDFs
+mvn clean package -Pudf-native-examples
+```
+
+The build will automatically:
+- Extract `libcudf.so` from the rapids-4-spark jar
+- Clone cuDF repository for headers (shallow clone)
+- Build only your UDF native code against the prebuilt library
+
+**Or manually extract first:**
+```bash
+./extract-cudf-libs.sh
+mvn clean package -Pudf-native-examples
+```
+
+This approach typically reduces the native cuDF build time by almost **2 hours**!
+
+#### Option 2: Build cuDF from Source (Slow but Complete)
+
+If you need to build cuDF from source, you can disable the prebuilt library option.
+
+**How it works:**
+- The Maven property `USE_PREBUILT_CUDF` (default: `ON` in pom.xml) is passed to CMake
+- Use `-DUSE_PREBUILT_CUDF=OFF` as a Maven system property to override the default
+- Maven replaces `${USE_PREBUILT_CUDF}` in pom.xml and passes it to CMake as `-DUSE_PREBUILT_CUDF=OFF`
+
+**Build with source:**
 
 ```bash
-git clone https://github.com/NVIDIA/spark-rapids-examples.git
 cd spark-rapids-examples/examples/UDF-Examples/RAPIDS-accelerated-UDFs
 export LOCAL_CCACHE_DIR="$HOME/.ccache"
 mkdir -p $LOCAL_CCACHE_DIR
@@ -140,8 +177,41 @@ export CMAKE_C_COMPILER_LAUNCHER="ccache"
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
 export CMAKE_CUDA_COMPILER_LAUNCHER="ccache"
 export CMAKE_CXX_LINKER_LAUNCHER="ccache"
-mvn clean package -Pudf-native-examples
+mvn clean package -Pudf-native-examples -DUSE_PREBUILT_CUDF=OFF
 ```
+
+**Alternative: Edit CMakeLists.txt directly**
+
+You can also edit `src/main/cpp/CMakeLists.txt` and set:
+```cmake
+option(USE_PREBUILT_CUDF "Use prebuilt libcudf.so from rapids-4-spark jar" OFF)
+```
+
+#### Configurable Maven Properties
+
+You can customize the build by passing Maven system properties via `-D<property>=<value>`. These properties are defined in `pom.xml` and passed to CMake:
+
+| Maven Property | Default Value | Description |
+|----------------|---------------|-------------|
+| `USE_PREBUILT_CUDF` | `ON` | Use prebuilt libcudf.so from rapids-4-spark jar (faster build) |
+| `GPU_ARCHS` | `RAPIDS` | GPU architectures to compile for (e.g., `60;70;75;80`) |
+| `CPP_PARALLEL_LEVEL` | `10` | Number of parallel compilation jobs |
+| `BUILD_UDF_BENCHMARKS` | `OFF` | Build benchmark executables |
+| `PER_THREAD_DEFAULT_STREAM` | `ON` | Enable per-thread default CUDA streams |
+| `CUDF_ENABLE_ARROW_S3` | `OFF` | Enable Arrow S3 support in cuDF |
+| `cudf.git.branch` | `main` | cuDF git branch to clone for headers |
+| `skipCudfExtraction` | `false` | Skip extracting cuDF dependencies from jar |
+
+**Example usage:**
+```bash
+# Build for specific GPU architectures with more parallel jobs
+mvn clean package -Pudf-native-examples -DGPU_ARCHS="75;80;86" -DCPP_PARALLEL_LEVEL=16
+
+# Skip cuDF extraction and use existing dependencies
+mvn clean package -Pudf-native-examples -DskipCudfExtraction=true
+```
+
+#### Using ccache to Accelerate Builds
 
 The Docker container has installed ccache 4.6 to accelerate the incremental building.
 You can change the LOCAL_CCACHE_DIR to a mounted folder so that the cache can persist.
