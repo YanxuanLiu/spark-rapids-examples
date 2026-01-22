@@ -15,7 +15,7 @@
 #
 
 # A container that can be used to build UDF native code against libcudf
-ARG CUDA_VERSION=12.8.0
+ARG CUDA_VERSION=12.9.1
 ARG LINUX_VERSION=rockylinux8
 
 FROM nvidia/cuda:${CUDA_VERSION}-devel-${LINUX_VERSION}
