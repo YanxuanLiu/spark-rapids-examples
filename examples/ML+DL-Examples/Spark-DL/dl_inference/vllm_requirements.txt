@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-pyspark>=3.4.0
+pyspark>=3.4.0,<4
 datasets
 vllm
 ipywidgets
