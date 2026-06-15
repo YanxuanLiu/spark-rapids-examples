@@ -23,7 +23,8 @@ scikit-learn
 jupyterlab
 pyspark>=3.4.0,<4
 huggingface
-datasets
+datasets==3.*
+huggingface-hub<1.0
 transformers
 ipywidgets
 nvidia-pytriton
