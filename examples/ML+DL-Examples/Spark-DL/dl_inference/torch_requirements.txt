@@ -1,4 +1,4 @@
-# Copyright (c) 2025, NVIDIA CORPORATION.
+# Copyright (c) 2025-2026, NVIDIA CORPORATION.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 # limitations under the License.
 
 -r requirements.txt
-torch<=2.5.1
-torchvision
-torch-tensorrt
+torch==2.8.0
+torchvision==0.23.0
+torch-tensorrt==2.8.0
 tensorrt --extra-index-url https://download.pytorch.org/whl/cu121
 sentence_transformers
 sentencepiece
